@@ -1,0 +1,15 @@
+{
+  "info": {
+    "name": "Clara — Agenda de Exames",
+    "description": "Testes manuais dos endpoints do desafio. Configure baseUrl como http://localhost:3000/api. O POST deve usar um slot devolvido pela consulta de disponibilidade e uma data futura.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:3000/api" }],
+  "item": [
+    { "name": "01 — Buscar exames", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/exams?search=raio-x", "host": ["{{baseUrl}}"], "path": ["exams"], "query": [{ "key": "search", "value": "raio-x" }] } } },
+    { "name": "02 — Listar médicos", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/doctors", "host": ["{{baseUrl}}"], "path": ["doctors"] } } },
+    { "name": "03 — Consultar horários", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/appointments/availability?doctorId=1&examId=1&date=2026-11-02", "host": ["{{baseUrl}}"], "path": ["appointments", "availability"], "query": [{ "key": "doctorId", "value": "1" }, { "key": "examId", "value": "1" }, { "key": "date", "value": "2026-11-02" }] } } },
+    { "name": "04 — Criar agendamento (ajuste para slot livre/futuro)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"patientName\": \"Marina Souza\",\n  \"examId\": 1,\n  \"doctorId\": 1,\n  \"startAt\": \"2026-11-02T08:00:00-03:00\"\n}", "options": { "raw": { "language": "json" } } }, "url": { "raw": "{{baseUrl}}/appointments", "host": ["{{baseUrl}}"], "path": ["appointments"] } } },
+    { "name": "05 — Listar agendamentos", "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/appointments", "host": ["{{baseUrl}}"], "path": ["appointments"] } } }
+  ]
+}
