@@ -127,7 +127,7 @@ O cliente envia apenas o início. `endAt` é calculado no backend com a duraçã
 8. **Catálogo:** todos os médicos podem realizar todos os exames, conforme a nota de apoio. Não há paciente cadastrado previamente: o nome é salvo no agendamento.
 9. **Persistência:** `synchronize: true` simplifica a criação de tabelas. Em produção, usar migrations e backups.
 
-## Próximos Passos
+## Ficou de Fora e Próximos Passos
 
 - Autenticação e autorização de pacientes/profissionais, recuperação de agendamento e cancelamento/remarcação.
 - Testes de integração/e2e com banco temporário e teste de contrato frontend/API.
