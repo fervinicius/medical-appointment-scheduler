@@ -12,19 +12,20 @@ Aplicação fullstack de demonstração para pesquisar exames, consultar horári
 - Testes unitários das regras de geração de horários, intervalos e serialização local dos agendamentos concorrentes.
 - Coleção Postman e comandos cURL em `postman/` e `docs/API_EXAMPLES.md`.
 
-## Arquitetura MVC (Visão Geral)
+## Arquitetura Monorepo (Visão Geral)
 
 ```text
-frontend (React + TypeScript :5173)
-  └── api.ts (fetch, erros HTTP, tipos de resposta)
-       └── HTTP /api
-backend (NestJS + ValidationPipe :3000)
-    ├── ExamsModule       → GET /exams
-    ├── DoctorsModule     → GET /doctors
-    ├── AppointmentsModule→ disponibilidade e criação
-    ├── scheduling.rules  → slots, duração e sobreposição (regra pura/testável)
-    ├── SeedService       → CSV + agenda base de médicos
-    └── TypeORM → SQLite (backend/data/agendamentos.sqlite)
+/medicalScheduling
+├──backend (NestJS + ValidationPipe :3000)
+|    ├── ExamsModule       → GET /exams
+|    ├── DoctorsModule     → GET /doctors
+|    ├── AppointmentsModule→ disponibilidade e criação
+|    ├── scheduling.rules  → slots, duração e sobreposição (regra pura/testável)
+|    ├── SeedService       → CSV + agenda base de médicos
+|    └── TypeORM → SQLite (backend/data/agendamentos.sqlite)
+├──frontend (React + TypeScript :5173)
+|  └── api.ts (fetch, erros HTTP, tipos de resposta)
+|       └── HTTP /api
 ```
 
 A interface não é a fonte da regra: mesmo que um cliente chame a API diretamente, o backend revalida os dados e o horário antes de salvar.
