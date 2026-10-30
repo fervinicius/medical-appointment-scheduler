@@ -1,34 +1,80 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, Index, ValueTransformer } from 'typeorm';
-import { Exam } from '../exams/exam.entity';
-import { Doctor } from '../doctors/doctor.entity';
+export const SAO_PAULO_OFFSET = '-03:00';
 
-const isoDateTransformer: ValueTransformer = {
-  to: (value: Date) => value.toISOString(),
-  from: (value: string | Date) => value instanceof Date ? value : new Date(value),
-};
+export interface ShiftInput {
+  weekday: number;
+  startTime: string;
+  endTime: string;
+}
 
-@Entity('appointments')
-@Index(['doctor', 'startAt'])
-export class Appointment {
-  @PrimaryGeneratedColumn()
-  id!: number;
+export interface IntervalInput {
+  startAt: Date;
+  endAt: Date;
+}
 
-  @Column({ type: 'varchar', length: 120 })
-  patientName!: string;
+export interface Slot {
+  startAt: Date;
+  endAt: Date;
+}
 
-  @ManyToOne(() => Exam, { nullable: false, onDelete: 'RESTRICT' })
-  exam!: Exam;
+export function isValidDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
 
-  @ManyToOne(() => Doctor, { nullable: false, onDelete: 'RESTRICT' })
-  doctor!: Doctor;
+export function weekdayFromDateOnly(date: string): number {
+  return new Date(`${date}T12:00:00Z`).getUTCDay();
+}
 
-  /** Persisted as UTC by the application. API returns ISO-8601 timestamps. */
-  @Column({ type: 'varchar', length: 30, transformer: isoDateTransformer })
-  startAt!: Date;
+export function minutesFromTime(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
 
-  @Column({ type: 'varchar', length: 30, transformer: isoDateTransformer })
-  endAt!: Date;
+export function buildSaoPauloDate(date: string, minuteOfDay: number): Date {
+  const hours = Math.floor(minuteOfDay / 60).toString().padStart(2, '0');
+  const minutes = (minuteOfDay % 60).toString().padStart(2, '0');
+  return new Date(`${date}T${hours}:${minutes}:00${SAO_PAULO_OFFSET}`);
+}
 
-  @CreateDateColumn({ type: 'datetime' })
-  createdAt!: Date;
+export function overlaps(a: IntervalInput, b: IntervalInput): boolean {
+  // Intervals are half-open [start, end): one appointment may end exactly when another begins.
+  return a.startAt.getTime() < b.endAt.getTime() && a.endAt.getTime() > b.startAt.getTime();
+}
+
+export function generateAvailableSlots(
+  date: string,
+  durationMinutes: number,
+  shifts: ShiftInput[],
+  existingAppointments: IntervalInput[],
+  now: Date = new Date(),
+): Slot[] {
+  const weekday = weekdayFromDateOnly(date);
+  const matchingShifts = shifts.filter((shift) => shift.weekday === weekday);
+  const slots: Slot[] = [];
+
+  for (const shift of matchingShifts) {
+    const shiftStart = minutesFromTime(shift.startTime);
+    const shiftEnd = minutesFromTime(shift.endTime);
+
+    for (let minute = shiftStart; minute + durationMinutes <= shiftEnd; minute += durationMinutes) {
+      const startAt = buildSaoPauloDate(date, minute);
+      const endAt = new Date(startAt.getTime() + durationMinutes * 60_000);
+      const slot = { startAt, endAt };
+
+      if (startAt.getTime() <= now.getTime()) continue;
+      if (existingAppointments.some((appointment) => overlaps(slot, appointment))) continue;
+      slots.push(slot);
+    }
+  }
+
+  return slots.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+}
+
+export function hasTimezoneOffset(value: string): boolean {
+  return /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
+}
+
+export function isMinuteAligned(value: Date): boolean {
+  return value.getSeconds() === 0 && value.getMilliseconds() === 0;
 }
